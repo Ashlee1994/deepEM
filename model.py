@@ -53,8 +53,15 @@ class deepEM():
         }
 
     def build_model(self):
-        self.X = tf.placeholder(tf.float32, shape = [self.args.batch_size, self.args.boxsize, self.args.boxsize, 1])
-        self.Y = tf.placeholder(tf.float32, shape = [self.args.batch_size,1])
+#        if self.args.is_training:
+#            self.X = tf.placeholder(tf.float32, shape = [self.args.batch_size, self.args.boxsize, self.args.boxsize, 1])
+#            self.Y = tf.placeholder(tf.float32, shape = [self.args.batch_size,1])
+#        else:
+#            self.X = tf.placeholder(tf.float32, shape = [self.args.rotation_n, self.args.boxsize, self.args.boxsize, 1])
+#            self.Y = tf.placeholder(tf.float32, shape = [self.args.rotation_n,1])
+            
+        self.X = tf.placeholder(tf.float32, shape = [None, self.args.boxsize, self.args.boxsize, 1])
+        self.Y = tf.placeholder(tf.float32, shape = [None,1])
         self.global_step = tf.Variable(0, name='global_step',trainable=False)
 
         layer1_conv = tf.nn.conv2d(self.X, self.variables['w1'], [1, 1, 1, 1], padding = 'VALID')
@@ -88,6 +95,9 @@ class deepEM():
         print "w7 shape is: ",self.variables['w7'].shape
 
         self.logits = tf.matmul(layer7_input, self.variables['w7']) + self.variables['b7']
+        
+        if not self.args.is_training:
+            return
         self.cost_func = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.logits, labels = self.Y))
         #self.lr = tf.maximum(1e-5,tf.train.exponential_decay(self.args.alpha, self.global_step, self.args.decay_step, self.args.decay_rate, staircase=True))
         self.lr = self.args.alpha

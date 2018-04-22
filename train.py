@@ -10,7 +10,7 @@ from args import Train_Args,Predict_Args
 def train():
     args = Train_Args()
     train_x, train_y, test_x, test_y = load_train(args)
-    checkpoint_dir = "./save"
+    checkpoint_dir = args.model_save_path
     if not os.path.exists(checkpoint_dir):
         os.mkdir(checkpoint_dir)
 #    gpu_config = tf.ConfigProto()
@@ -22,7 +22,7 @@ def train():
         sess.run(tf.global_variables_initializer())
         print("train size is %d " % len(train_x))
         for e in xrange(args.num_epochs):
-            print('\n=============== Batch %d/%d ==============='% (e,args.num_epochs + 1))
+            print('\n=============== Batch %d/%d ==============='% (e + 1,args.num_epochs))
             cost = []
             num_batch = len(train_x) / args.batch_size
             print("num_batch is %d" % num_batch)
@@ -40,16 +40,27 @@ def train():
                     #print('i =  %d'% i)
                     print('Loss: %.6f' % (np.mean(cost)))
             #print "layer 7 input: ", deepem.l7_input.eval()
+            #train_accuracy = accuracy.eval( feed_dict )
+            #print("batch %d, training accuracy %.6f" %(e, train_accuracy))
             ckpt_path = os.path.join(checkpoint_dir, 'model.ckpt')
             saver.save(sess, ckpt_path, global_step = e)
 
         # test
-        saver.restore(sess, checkpoint_dir)
-        test_pred = tf.argmax(deepem.logits,1).ecal({deepem.X: test_x})
-        test_true = np.argmax(test_x, 1)
-        test_correct = correct.eval({deepem.X: test_x, deepem.Y: test_y})
-        test_accuracy = np.sum(test_correct)/len(test_correct)
-        print('test set accuracy: ', test_accuracy)
+        checkpoint_dir = args.model_save_path
+        ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+        if ckpt and ckpt.model_checkpoint_path:
+            saver.restore(sess, ckpt.model_checkpoint_path)
+        else:
+            print('Restore model failed!')
+        
+        test_pred = sess.run(tf.nn.sigmoid(deepem.logits), feed_dict={deepem.X: test_x})
+        #print "pred is ", test_pred
+        #print "test_y is ", test_y
+        test_pred[test_pred<0.5] = 0
+        test_pred[test_pred>=0.5] = 1
+        #print "pred is ", test_pred
+        accuracy = np.equal(test_pred,test_y)
+        print "accuracy: ",np.sum(accuracy)/len(accuracy)
 
 
 if __name__ == '__main__':

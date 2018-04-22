@@ -10,7 +10,7 @@ import mrcfile
 
 def mapstd(mrcData):
     avg = mrcData.mean()
-    stddev = np.std(mrcData, ddof = 1)
+    stddev = np.std(mrcData)
     data = mrcData.copy()
     data = (data - avg) / stddev
     return data
@@ -28,6 +28,12 @@ def read_particles(mic_path, dim_x, dim_y, boxsize, name_prefix, box_path, start
         boxY = []
         mrc_name = mic_path + name_prefix + str(num) + ".mrc"
         box_name = box_path + name_prefix + str(num) + ".box"
+        if not os.path.exists(mrc_name):
+            print("%s is not exist!" % mrc_name)
+            continue
+        if not os.path.exists(box_name):
+            print("%s is not exist!" % box_name)
+            continue
         boxfile = open(box_name, 'r')
         for line in boxfile:
             col = line.split()
@@ -156,7 +162,7 @@ def load_train(args):
             test_x[start:end] = positive1[args.num_positive1*4:args.num_positive1*4 + args.num_p_test*4]
         else:
             test_x[start : start + len(positive1)-args.num_positive1*4] = positive1[args.num_positive1*4:]
-            test_x[start + len(positive1)-args.num_positive1*4:end] = positive2[args.num_positive2*4:args.num_p_test*4-len(positive1) + args.num_positive1*4]
+            test_x[start + len(positive1)-args.num_positive1*4:end] = positive2[args.num_positive2*4:args.num_positive2*4+args.num_p_test*4-len(positive1) + args.num_positive1*4]
         test_y[start:end] = 1
     
         start = end
@@ -165,7 +171,7 @@ def load_train(args):
             test_x[start:end] = negative1[args.num_negative1*4:args.num_negative1*4 + args.num_n_test*4]
         else:
             test_x[start:start + len(negative1)-args.num_negative1*4] = negative1[args.num_negative1*4:]
-            test_x[start+ len(positive1)-args.num_positive1*4:end] = positive2[args.num_positive2*4:args.num_p_test*4-len(positive1) + args.num_positive1*4]
+            test_x[start+ len(negative1)-args.num_negative1*4:end] = negative2[args.num_negative2*4:args.num_negative2*4+args.num_n_test*4-len(negative1) + args.num_negative1*4]
         test_y[start:end] = 0
     else: # do_train_again = 0
         if args.num_p_test > len(positive1)/4 - args.num_positive1:
@@ -196,11 +202,81 @@ def load_train(args):
     
     return train_x, train_y, test_x, test_y
 
+def sub_img(mrcData, x,y,boxsize):
+    '''
+    This part is to extract a box of pixels form origin mrc file
+    '''
+    box = np.empty((boxsize,boxsize))
+    for row in range(boxsize):
+        # print " mrcData[0][y][x:x+boxsize] = ",  mrcData[0][y][x:x+boxsize]
+        box[row,:] = mrcData[0][y][x:x+boxsize]
+        y += 1
+    return box
 
 def load_predict(args):
     '''
     This part include load predict parameters and predict data
     '''
+    # test_index = [[mic_num, x, y]]
+    # test_x, test_index  = load_predict(args)
+    test_x = []
+    test_index = []
+    print("processing test data...")
+    for num in range(args.start_mic_num, args.end_mic_num + 1):
+        mrc_name = args.data_path + args.name_prefix + str(num) + ".mrc"
+        if not os.path.exists(mrc_name):
+            print("%s is not exist!" % mrc_name)
+            continue
+        print("processing mrc %s..." % mrc_name)
+        mrc = mrcfile.open(mrc_name)
+        mrc_std = mapstd(mrc.data)
+        
+        x_step_num = (args.dim_x - args.boxsize) / args.scan_step
+        y_step_num = (args.dim_y - args.boxsize) / args.scan_step
+        for i in xrange(x_step_num):
+            for j in xrange(y_step_num):
+                x = i*args.scan_step
+                y = j*args.scan_step       
+                img = sub_img(mrc_std,x, y, args.boxsize)
+                test_x.append(img)
+                test_index.append([num,x,y])
+
+                rotate_map(img)      # rotate 90
+                test_x.append(img)
+                test_index.append([num,x,y])
+
+                rotate_map(img)      # rotate 180
+                test_x.append(img)
+                test_index.append([num,x,y])
+
+
+                rotate_map(img)      # rotate 270
+                test_x.append(img)
+                test_index.append([num,x,y])
+
+        mrc.close()
+    #print("test_x.shape="% np.array(test_x).shape)
+        
+    return test_x, test_index
 
 if __name__ == '__main__':
     load_train()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
