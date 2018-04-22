@@ -6,6 +6,7 @@ class Train_Args():
     name_length                 =       5
     name_prefix                 =       "image_"
     mic_path                    =       "data/19Sdata/mic/"
+    model_save_path             =       "data/19Sdata/model/"
     positive1_box_path          =       "data/19Sdata/positive/"
     negative1_box_path          =       "data/19Sdata/negative/"
     positive1_mic_start_num     =       30001
