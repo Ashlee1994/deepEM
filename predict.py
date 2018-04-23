@@ -9,7 +9,7 @@ from utils import sub_img
 from utils import mapstd
 from utils import rotate_map
 from model import deepEM
-from args import Predict_Args
+from KLH import Predict_Args
 
 
 def predict():
@@ -26,7 +26,6 @@ def predict():
     checkpoint_dir = args.model_save_path
     
     with tf.Session() as sess:
-        deepem = deepEM(args)
         saver = tf.train.Saver(tf.global_variables())
         ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
         if ckpt and ckpt.model_checkpoint_path:
@@ -34,24 +33,6 @@ def predict():
         else:
             print('Restore model failed!')
 
-        # add a sigmoid function to the output of test
-#        logit = tf.nn.sigmoid(deepem.logits) 
-#
-#        pred = sess.run(logit, feed_dict = {deepem.X: test_x})
-        
-        # record the particles
-       # index = -1
-#        for i in xrange(args.end_mic_num - args.start_mic_num):
-#            if index == test_index[i][0]:
-#                continue
-#            output_dir = args.result_path + args.name_prefix + test_index[i][0] + '.box'
-#            output = open(output_dir, 'w')
-#            if pred[i] == 1:
-#                output.write(str(test_index[i][1])+'\t'+str(test_index[i][2])+'\t'+args.boxsize+'\t'+args.boxsize)
-#                print str(test_index[i][1]),'\t',str(test_index[i][2]),'\t'+args.boxsize,'\t',args.boxsize
-#                # record the mrc number 
-#                index = test_index[i][0]
-#            output.close
         if not os.path.exists(args.result_path):
             os.mkdir(args.result_path)
                 
@@ -65,7 +46,7 @@ def predict():
             output_name = args.result_path + args.name_prefix + str(num)  + '.box'
             output = open(output_name, 'w')
     
-            result = []
+            # result = []
             x_step_num = (args.dim_x - args.boxsize) / args.scan_step
             y_step_num = (args.dim_y - args.boxsize) / args.scan_step
             for i in xrange(x_step_num):
@@ -74,12 +55,14 @@ def predict():
                     x = i*args.scan_step
                     y = j*args.scan_step
                     img = sub_img(mrc.data,x, y, args.boxsize)
+                    print "img: " , img
                     stddev = np.std(img)
                     print("the stddev of image %d is %.5f" % (num, stddev))
                     if stddev <= args.min_std or stddev >= args.max_std:
                         continue
 
                     img = mapstd(img)
+                    print "img: " , img
                     test_x.append(img)
 
                     rotate_map(img)      # rotate 90
@@ -92,10 +75,12 @@ def predict():
                     test_x.append(img)
                     test_x = np.reshape(test_x,[4,args.boxsize,args.boxsize,1])
 
-                    pred = sess.run(tf.nn.sigmoid(deepem.logits),feed_dict={deepem.X: test_x})
+                    pred = sess.run(deepem.logits,feed_dict={deepem.X: test_x})
+                    #pred = sess.run(tf.nn.sigmoid(deepem.logits),feed_dict={deepem.X: test_x})
                     print "pred is ", pred
                     avg = pred.mean()
-                    result.append([x,y,avg,stddev])
+             #       result.append([x,y,avg,stddev])
+                    print num,".mrc x = ",x,", y = ",y,", avgpred = ", avg
                     if avg >= 0.5:
                         output.write(str(x)+'\t'+str(y)+'\t'+args.boxsize+'\t'+args.boxsize)
                         print num," ",x," ", y," ",args.boxsize," ",args.boxsize

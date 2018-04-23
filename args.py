@@ -7,7 +7,11 @@ class Train_Args():
     name_length                 =       5
     name_prefix                 =       "image_"
     mic_path                    =       "data/19Sdata/mic/"
-    model_save_path             =       "./data/19Sdata/model"
+# model-4 mean square std and epochs = 30 batchsize = 100
+    model_save_path             =       "./data/19Sdata/model-4"
+    # model-3 changed the loss function
+#    model_save_path             =       "./data/19Sdata/model-3"
+#    model_save_path             =       "./data/19Sdata/model-2"
 #    model_save_path             =       "./model"
     positive1_box_path          =       "data/19Sdata/positive/"
     negative1_box_path          =       "data/19Sdata/negative/"
@@ -49,8 +53,8 @@ class Train_Args():
     SIL_poolingsize             =       2
 
     alpha                       =       0.01
-    batch_size                  =       50
-    num_epochs                  =       2
+    batch_size                  =       100
+    num_epochs                  =       30
     decay_rate                  =       0.96
     decay_step                  =       200
     sigma                       =       0.0001
@@ -63,7 +67,8 @@ class Predict_Args():
     cnn_file                    =       "data/19S.cnn"
     data_path                   =       "data/19Sdata/mic/"
     result_path                 =       "./data/19Sdata/result/"
-    model_save_path             =       "./data/19Sdata/model"
+    #model_save_path             =       "./data/19Sdata/model"
+    model_save_path             =       "./model"
     #model_save_path             =       "data/19Sdata/model/"
     boxsize                     =       160
     start_mic_num               =       30245

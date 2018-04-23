@@ -5,7 +5,6 @@ import os
 import pandas as pd
 import numpy as np
 #from args import Train_Args, Predict_Args
-import time
 import mrcfile
 
 def mapstd(mrcData):
@@ -50,6 +49,7 @@ def read_particles(mic_path, dim_x, dim_y, boxsize, name_prefix, box_path, start
             continue
         mrc = mrcfile.open(mrc_name)
         mrcstd = mapstd(mrc.data)
+        #print "mrcstd: ", mrcstd
         particle = np.zeros((boxsize, boxsize))
         for ii in range(len(boxX)):
             index_x = boxX[ii]
@@ -74,7 +74,6 @@ def load_train(args):
     '''
     This part include load training parameters and training data
     '''
-    time_start = time.time()
     #args = Train_Args()
     
     if not os.path.exists( args.mic_path) and os.path.exists(args.positive1_box_path ) and os.path.exists(args.negative1_box_path ) :
@@ -197,8 +196,6 @@ def load_train(args):
     train_x = train_x.reshape(len(train_x),args.boxsize, args.boxsize, 1)
     test_x = test_x.reshape(len(test_x),args.boxsize, args.boxsize, 1)
 
-    time_end = time.time()
-    print "\nread done! totally cost: ",time_end - time_start,"\n"
     
     return train_x, train_y, test_x, test_y
 

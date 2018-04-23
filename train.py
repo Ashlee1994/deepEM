@@ -1,15 +1,20 @@
 import tensorflow as tf
 import numpy as np
+import time
 import os
 
 from utils import load_train
 from model import deepEM
-from args import Train_Args,Predict_Args
+from KLH import Train_Args,Predict_Args
 
 
 def train():
     args = Train_Args()
+    time_start = time.time()
     train_x, train_y, test_x, test_y = load_train(args)
+    time_end = time.time()
+    print "\nread done! totally cost: ",time_end - time_start,"\n"
+    time_start = time.time()
     checkpoint_dir = args.model_save_path
     if not os.path.exists(checkpoint_dir):
         os.mkdir(checkpoint_dir)
@@ -32,7 +37,7 @@ def train():
                 batch_x = np.asarray(batch_x)
                 batch_y = np.asarray(batch_y)
                 feed_dict = {deepem.X:batch_x, deepem.Y: batch_y}
-                fetches = [deepem.cost_func, deepem.optimizer]
+                fetches = [deepem.loss, deepem.optimizer]
 
                 loss,_= sess.run(fetches, feed_dict)
                 cost.append(loss)
@@ -43,7 +48,7 @@ def train():
             #train_accuracy = accuracy.eval( feed_dict )
             #print("batch %d, training accuracy %.6f" %(e, train_accuracy))
             ckpt_path = os.path.join(checkpoint_dir, 'model.ckpt')
-            saver.save(sess, ckpt_path, global_step = e)
+#            saver.save(sess, ckpt_path, global_step = e)
 
         # test
         checkpoint_dir = args.model_save_path
@@ -53,6 +58,9 @@ def train():
         else:
             print('Restore model failed!')
         
+        time_end = time.time()
+        print "\ntraining done! totally cost: ",time_end - time_start,"\n"
+        time_start = time.time()
         test_pred = sess.run(tf.nn.sigmoid(deepem.logits), feed_dict={deepem.X: test_x})
         #print "pred is ", test_pred
         #print "test_y is ", test_y
@@ -61,6 +69,8 @@ def train():
         #print "pred is ", test_pred
         accuracy = np.equal(test_pred,test_y)
         print "accuracy: ",np.sum(accuracy)/len(accuracy)
+        time_end = time.time()
+        print "\ntesting done! totally cost: ",time_end - time_start,"\n"
 
 
 if __name__ == '__main__':

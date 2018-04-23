@@ -98,10 +98,11 @@ class deepEM():
         
         if not self.args.is_training:
             return
-        self.cost_func = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.logits, labels = self.Y))
+        #self.cost_func = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.logits, labels = self.Y))
+        self.loss = tf.sqrt(tf.reduce_mean(tf.square(self.Y - self.logits)))
         #self.lr = tf.maximum(1e-5,tf.train.exponential_decay(self.args.alpha, self.global_step, self.args.decay_step, self.args.decay_rate, staircase=True))
         self.lr = self.args.alpha
-        self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.cost_func)
+        self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
 
 #        print "layer 7 input: ", layer7_input.eval()
 #
