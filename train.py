@@ -41,14 +41,14 @@ def train():
 
                 loss,_= sess.run(fetches, feed_dict)
                 cost.append(loss)
-                if i % 100 == 0:
+                if i % 3 == 0:
                     #print('i =  %d'% i)
                     print('Loss: %.6f' % (np.mean(cost)))
             #print "layer 7 input: ", deepem.l7_input.eval()
             #train_accuracy = accuracy.eval( feed_dict )
             #print("batch %d, training accuracy %.6f" %(e, train_accuracy))
             ckpt_path = os.path.join(checkpoint_dir, 'model.ckpt')
-#            saver.save(sess, ckpt_path, global_step = e)
+            saver.save(sess, ckpt_path, global_step = e)
 
         # test
         checkpoint_dir = args.model_save_path
