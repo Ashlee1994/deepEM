@@ -7,7 +7,8 @@ class Train_Args():
     name_prefix                 =       ""
     mic_path                    =       "data/KLHdata/mic/"
 # model-4 mean square std and epochs = 30 batchsize = 100
-    model_save_path             =       "./data/KLHdata/model-0.2-30"
+    model_save_path             =       "./data/KLHdata/model-0.1-3-relu-7-layer-max-softmax/"
+    #training_message_path       =       "./data/KLHdata/model-0.3-30/"
     # model-3 changed the loss function
 #    model_save_path             =       "./data/19Sdata/model-3"
 #    model_save_path             =       "./data/19Sdata/model-2"
@@ -15,10 +16,10 @@ class Train_Args():
     positive1_box_path          =       "data/KLHdata/positive/"
     negative1_box_path          =       "data/KLHdata/negative/"
     positive1_mic_start_num     =       1
-    positive1_mic_end_num       =       100
+    positive1_mic_end_num       =       50
     negative1_mic_start_num     =       1
-    negative1_mic_end_num       =       100
-    do_train_again              =       0
+    negative1_mic_end_num       =       50
+    do_train_again              =       False
     num_positive1               =       800
     num_negative1               =       800
     num_positive2               =       800
@@ -26,10 +27,10 @@ class Train_Args():
 
     positive2_box_path          =       "data/19Sdata/sel_positive/"
     negative2_box_path          =       "data/19Sdata/sel_negative/"
-    positive2_mic_start_num     =       30051
-    positive2_mic_end_num       =       30090
-    negative2_mic_start_num     =       30051
-    negative2_mic_end_num       =       30100
+    positive2_mic_start_num     =       1
+    positive2_mic_end_num       =       50
+    negative2_mic_start_num     =       1
+    negative2_mic_end_num       =       50
 
     rotation_angel              =       90
     rotation_n                  =       4
@@ -51,7 +52,7 @@ class Train_Args():
 
     SIL_poolingsize             =       2
 
-    alpha                       =       0.2
+    alpha                       =       0.001
     batch_size                  =       500
     num_epochs                  =       30
     decay_rate                  =       0.96
@@ -66,11 +67,11 @@ class Predict_Args():
     data_path                   =       "data/KLHdata/mic/"
     result_path                 =       "./data/KLHdata/result/"
     #model_save_path             =       "./data/19Sdata/model"
-    model_save_path             =       "./data/KLHdata/model"
+    model_save_path             =       "./data/KLHdata/model-0.1-3-relu-7-layer-max-softmax"
     #model_save_path             =       "data/19Sdata/model/"
     boxsize                     =       272
-    start_mic_num               =       78
-    end_mic_num                 =       78
+    start_mic_num               =       47
+    end_mic_num                 =       47
     dim_x                       =       2048
     dim_y                       =       2048
     scan_step                   =       20
@@ -98,7 +99,7 @@ class Predict_Args():
 
     SIL_poolingsize             =       2
 
-    alpha                       =       0.01
+    alpha                       =       0.001
     batch_size                  =       50
     num_epochs                  =       20
     decay_rate                  =       0.96
