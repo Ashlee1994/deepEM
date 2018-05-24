@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import os,sys,shutil,time
 from model import deepEM
 from utils import load_train
-from args_19S import Train_Args
-#from args_KLH import Train_Args
+#from args_19S import Train_Args
+from args_KLH import Train_Args
 
 def train():
     args = Train_Args()
@@ -44,7 +44,7 @@ def train():
         saver = tf.train.Saver(tf.global_variables(), max_to_keep = 100)
         sess.run(tf.global_variables_initializer())
         print("train size is %d " % len(train_x), flush=True)
-    
+
         for e in range(args.num_epochs):
             print('\n=============== Epoch %d/%d ==============='% (e + 1,args.num_epochs),flush=True)
             output.write("\n=============== Epoch " + str(e + 1) + "/" + str(args.num_epochs) + " ===============\n")
@@ -56,11 +56,7 @@ def train():
             for i in range(num_batch):
                 batch_x = train_x[args.batch_size*i:args.batch_size*(i+1)]
                 batch_y = train_y[args.batch_size*i:args.batch_size*(i+1)]
-                batch_x = np.asarray(batch_x)
-                batch_y = np.asarray(batch_y)
-                fetches = [deepem.loss, deepem.pred, deepem.optimizer]
-                feed_dict = {deepem.X:batch_x, deepem.Y: batch_y}
-                loss,pred_train,_= sess.run(fetches, feed_dict)
+                loss,pred_train,_= sess.run([deepem.loss, deepem.pred, deepem.optimizer], {deepem.X:batch_x, deepem.Y: batch_y})
                 test_train_pred[args.batch_size*i:args.batch_size*(i+1)] = pred_train[:]
                 test_train_y[args.batch_size*i:args.batch_size*(i+1)] = batch_y[:]
                 cost.append(loss)
@@ -71,12 +67,10 @@ def train():
             output.write("average loss: " + str(np.mean(cost)) + '\n')
             output.flush()
             test_train_pred = np.asarray(test_train_pred)
-            print("avg = %.6f , min = %.6f, max = %.6f "% (test_train_pred.mean(),test_train_pred.min(),test_train_pred.max()))
             threhold = 0.5
             test_train_pred[test_train_pred<=threhold] = 0
             test_train_pred[test_train_pred>threhold] = 1
-            accuracy_train = np.equal(test_train_pred,test_train_y)
-            accuracy_train = np.sum(accuracy_train)/len(accuracy_train)
+            accuracy_train = np.sum(np.equal(test_train_pred,test_train_y))/len(test_train_y)
             plot_train.append(1- accuracy_train)
             print("training set accuracy: %.6f" % accuracy_train,flush=True)
             output.write("train accuracy: " + str(accuracy_train) + '\n')
@@ -85,7 +79,6 @@ def train():
             # start testing
             if e % 1 == 0:
                 print("\ntesting start.",flush=True)
-               # time_start = time.time()
                 num_batch = len(test_x) // args.batch_size
                 print("num_batch is %d" % num_batch,flush=True)
                 test_pred = []
@@ -95,12 +88,10 @@ def train():
                     pred = sess.run(deepem.pred,feed_dict={deepem.X: batch_x})
                     test_pred[args.batch_size*i:args.batch_size*(i+1)] = pred[:]
                 test_pred = np.asarray(test_pred)
-                print("avg = %.6f , min = %.6f, max = %.6f "% (test_pred.mean(),test_pred.min(),test_pred.max()))
                 threhold = 0.5
                 test_pred[test_pred<=threhold] = 0
                 test_pred[test_pred>threhold] = 1
-                accuracy = np.equal(test_pred,test_y)
-                accuracy = np.sum(accuracy)/len(accuracy)
+                accuracy = np.sum(np.equal(test_pred,test_y))/len(test_y)
                 plot.append(1- accuracy)
                 print("testing set accuracy: %.6f" % accuracy,flush=True)
                 output.write("testing set accuracy: " + str(accuracy) + '\n')

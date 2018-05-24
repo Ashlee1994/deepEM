@@ -3,7 +3,7 @@ import numpy as np
 import mrcfile
 import os,sys,time
 from model import deepEM
-from utils import mapstd,sub_img,non_max_suppression_fast,load_predict
+from utils import mapstd,sub_img,non_max_suppression,load_predict
 from args_19S import Predict_Args
 #from args_KLH import Predict_Args
 
@@ -56,8 +56,7 @@ def predict():
             particle = np.asarray(particle)
             scores = np.asarray(scores)
             # remove overlapping particles
-            result = non_max_suppression_fast(particle, args.boxsize,args.threhold )
-            # result = non_max_suppression_fast(particle, scores, args.boxsize,args.threhold )
+            result = non_max_suppression(particle, scores, args.boxsize,args.threhold )
             for i in range(len(result)):
                 #print("%d.mrc %d %d "%(num,result[i][0],result[i][1]),flush=True)
                 output.write(str(result[i][0])+'\t'+ str(result[i][1])+'\t'+str(args.boxsize)+'\t'+str(args.boxsize) +'\n')

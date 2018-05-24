@@ -233,7 +233,6 @@ def load_train(args):
     return train_x, train_y, test_x, test_y
 
 def non_max_suppression(particle,scores, boxsize, overlapThresh): 
-    ## todo : sort in scores, and remove the overlapping particles.   
     """Pure Python NMS baseline."""    
     x1 = particle[:,0]   
     y1 = particle[:,1]  
@@ -241,97 +240,24 @@ def non_max_suppression(particle,scores, boxsize, overlapThresh):
     y2 = y1 + boxsize
     
     areas = (x2 - x1 + 1) * (y2 - y1 + 1)    
-    # sort socres, get the highest index    
-    # order = scores.argsort()[::-1] 
-    #idxs = np.argsort(y2) 
-    #print("idxs is :" , idxs)  
-    # keep is the result   
     pick = []    
-    idxs = scores.copy()  #.sort()
-    print("idxs is: ", idxs)
-    obj = np.sort(idxs)
-    print("idxs is: ", idxs)
-    print("obj is: ", obj)
-    print("sort: ", np.sort(idxs))
-    while len(idxs) > 0:    
-        # idxs[0] is the highest box
-        last = len(idxs) - 1
-        i = idxs[last]    
-        # pick.append(i) 
-        # calculate the overlapping area  
-        xx1 = np.maximum(x1[i], x1[idxs[:last]])    
-        yy1 = np.maximum(y1[i], y1[idxs[:last]])    
-        xx2 = np.minimum(x2[i], x2[idxs[:last]])    
-        yy2 = np.minimum(y2[i], y2[idxs[:last]])    
+    idxs = np.arange(len(scores))
+   
+    while scores.max() > 0:    
+        index = np.argmax(scores)
+        pick.append(index)  
+        last = np.delete(idxs,np.concatenate(([index], np.where(scores < 0)[0])))
+        xx1 = np.maximum(x1[index], x1[last])    
+        yy1 = np.maximum(y1[index], y1[last])    
+        xx2 = np.minimum(x2[index], x2[last])    
+        yy2 = np.minimum(y2[index], y2[last])    
     
         w = np.maximum(0.0, xx2 - xx1 + 1)    
         h = np.maximum(0.0, yy2 - yy1 + 1)    
 
-        overlap = (w * h) / areas[idxs[:last]] 
-
-        # overlap > overlapThresh   select the maximun socre
-        #highest = np.argmax(np.concatenate((scores[last],scores.where(overlap > overlapThresh)[0])))
-        idxs = np.delete(idxs, np.concatenate(([last],
-            np.where(overlap > overlapThresh)[0])))
-        pick.append(highest)
-    # print("keep:", keep)
-    return particle[pick].astype("int")
-
-# remove overlapping particles
-def non_max_suppression_fast(particle,boxsize, overlapThresh):
-    # if there are no boxes, return an empty list
-    if len(particle) == 0:
-        return []
- 
-    # if the bounding boxes integers, convert them to floats --
-    # this is important since we'll be doing a bunch of divisions
-    if particle.dtype.kind == "i":
-        particle = particle.astype("float")
- 
-    # initialize the list of picked indexes 
-    pick = []
- 
-    # grab the coordinates of the bounding boxes
-    x1 = particle[:,0]   
-    y1 = particle[:,1]  
-    x2 = x1 + boxsize
-    y2 = y1 + boxsize
- 
-    # compute the area of the bounding boxes and sort the bounding
-    # boxes by the bottom-right y-coordinate of the bounding box
-    area = (x2 - x1 + 1) * (y2 - y1 + 1)
-    idxs = np.argsort(y2)
- 
-    # keep looping while some indexes still remain in the indexes
-    # list
-    while len(idxs) > 0:
-        # grab the last index in the indexes list and add the
-        # index value to the list of picked indexes
-        last = len(idxs) - 1
-        i = idxs[last]
-        pick.append(i)
- 
-        # find the largest (x, y) coordinates for the start of
-        # the bounding box and the smallest (x, y) coordinates
-        # for the end of the bounding box
-        xx1 = np.maximum(x1[i], x1[idxs[:last]])
-        yy1 = np.maximum(y1[i], y1[idxs[:last]])
-        xx2 = np.minimum(x2[i], x2[idxs[:last]])
-        yy2 = np.minimum(y2[i], y2[idxs[:last]])
- 
-        # compute the width and height of the bounding box
-        w = np.maximum(0, xx2 - xx1 + 1)
-        h = np.maximum(0, yy2 - yy1 + 1)
- 
-        # compute the ratio of overlap
-        overlap = (w * h) / area[idxs[:last]]
-        #print("overlap is", overlap)
-        # delete all indexes from the index list that have
-        idxs = np.delete(idxs, np.concatenate(([last],
-            np.where(overlap > overlapThresh)[0])))
- 
-    # return only the bounding boxes that were picked using the
-    # integer data type
+        # calculate the overlapping area 
+        overlap = (w * h) / areas[last] 
+        scores[np.concatenate(([index],last[np.where(overlap > overlapThresh)[0]]))] = -1
     return particle[pick].astype("int")
 
 def load_predict(args, mrc_name):

@@ -28,7 +28,7 @@ class Train_Args():
     negative2_mic_end_num       =       50
 
     rotation_angel              =       90
-    rotation_n                  =       4   
+    rotation_n                  =       4
     num_p_test                  =       117 
     num_n_test                  =       83  
 

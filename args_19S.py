@@ -30,7 +30,7 @@ class Train_Args():
     negative2_mic_end_num       =       30100
 
     rotation_angel              =       90
-    rotation_n                  =       4
+    rotation_n                  =       1
     num_p_test                  =       150
     num_n_test                  =       150
 
@@ -69,13 +69,13 @@ class Predict_Args():
     result_path                 =       "./data/19Sdata/result/"
     model_save_path             =       "./data/19Sdata/model/0.88-32-64-64/"
     boxsize                     =       160     
-    start_mic_num               =       30188   # 30210 - 30211
-    end_mic_num                 =       30188
+    start_mic_num               =       30188 
+    end_mic_num                 =       30190
     dim_x                       =       1855
     dim_y                       =       1919
-    scan_step                   =       50
+    scan_step                   =       10
     accuracy                    =       0.998
-    threhold                    =       0.6
+    threhold                    =       0.7
     name_length                 =       5
     name_prefix                 =       "image_"
 

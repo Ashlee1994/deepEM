@@ -112,6 +112,9 @@ class deepEM():
         if not self.args.is_training:
             return
 
+        # self.error = self.Y - self.pred
+        # self.loss = (tf.sum())/2
+
         # regularization
         if not self.args.regularization:
             self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.logits, labels = self.Y))
