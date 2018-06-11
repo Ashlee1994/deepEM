@@ -2,9 +2,8 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import os,sys,shutil,time
-from vgg19_19S import Vgg19
+from vgg19 import Vgg19
 from utils import load_train
-# from args_vgg19 import Train_Args
 from args_vgg19_KLH import Train_Args
 
 def train():

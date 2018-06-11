@@ -14,7 +14,6 @@ class deepEM():
         # first convolutional layer
         std = 0.01
         w1 = tf.Variable(tf.contrib.layers.xavier_initializer()([self.args.FL_kernelsize, self.args.FL_kernelsize, 1, self.args.FL_feature_map]))
-        # w1 = tf.Variable(tf.truncated_normal([self.args.FL_kernelsize, self.args.FL_kernelsize, 1, self.args.FL_feature_map], stddev = std))
         b1 = tf.Variable(tf.zeros([self.args.FL_feature_map]))
 
         # second pooling layer
@@ -22,7 +21,6 @@ class deepEM():
 
         # third convolutional layer
         w3 = tf.Variable(tf.contrib.layers.xavier_initializer()([self.args.TL_kernelsize, self.args.TL_kernelsize, self.args.FL_feature_map, self.args.TL_feature_map]))
-        # w3 = tf.Variable(tf.truncated_normal([self.args.TL_kernelsize, self.args.TL_kernelsize, self.args.FL_feature_map, self.args.TL_feature_map], stddev = std))
         b3 = tf.Variable(tf.zeros([self.args.TL_feature_map]))
 
         # forth pooling layer
@@ -30,7 +28,6 @@ class deepEM():
 
         # fifth convolutional layer
         w5 = tf.Variable(tf.contrib.layers.xavier_initializer()([self.args.FIL_kernelsize, self.args.FIL_kernelsize, self.args.TL_feature_map, self.args.FIL_feature_map]))
-        # w5 = tf.Variable(tf.truncated_normal([self.args.FIL_kernelsize, self.args.FIL_kernelsize, self.args.TL_feature_map, self.args.FIL_feature_map], stddev = std))
         b5 = tf.Variable(tf.zeros([self.args.FIL_feature_map]))
 
         # sixth pooling layer
@@ -51,7 +48,6 @@ class deepEM():
         print("type(hidden_neurons):",type(hidden_neurons))
 
         # output layer
-        #w7 = tf.Variable(tf.contrib.layers.xavier_initializer()([fully_para_num, hidden_neurons]))
         w7 = tf.Variable(tf.truncated_normal([fully_para_num, hidden_neurons], stddev = std))
         b7 = tf.Variable(tf.zeros([hidden_neurons]))
 
@@ -113,7 +109,6 @@ class deepEM():
 
         # regularization
         if not self.args.regularization:
-            # self.loss = tf.sqrt(tf.reduce_mean(tf.square(self.Y - self.logits)))
             self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.logits, labels = self.Y))
         else:
             self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.logits, labels = self.Y) + \
@@ -122,10 +117,7 @@ class deepEM():
                     tf.contrib.layers.l2_regularizer(self.args.reg_rate)(self.variables['w5']) + \
                     tf.contrib.layers.l2_regularizer(self.args.reg_rate)(self.variables['w7']))
 
-        #self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels = self.Y))
-        #self.loss = tf.sqrt(tf.reduce_mean(tf.square(self.Y - self.logits)))
         self.lr = tf.maximum(1e-6,tf.train.exponential_decay(self.args.learning_rate, self.global_step, self.args.decay_step, self.args.decay_rate, staircase=True))
-        # self.optimizer = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss, global_step=self.global_step)
         self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss, global_step=self.global_step)
 
   

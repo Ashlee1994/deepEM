@@ -32,6 +32,7 @@ class Vgg19:
             'fc7': {'filter': [4096, 4096], 'biases':[4096]},    # 4096,
             'fc8': {'filter': [4096,    1], 'biases':[1]}   # 1
         }
+        
 
     def build_model(self):
         self.X = tf.placeholder(tf.float32, shape = [None, self.args.boxsize, self.args.boxsize, 1])
@@ -110,7 +111,6 @@ class Vgg19:
 
         if not self.args.is_training:
             return
-
         if not self.args.regularization:
             self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.pred, labels = self.Y))
         else:
@@ -120,15 +120,13 @@ class Vgg19:
                     tf.contrib.layers.l2_regularizer(self.args.reg_rate)(self.get_fc_weight('fc8'))
                   
         self.lr = tf.maximum(1e-12,tf.train.exponential_decay(self.args.learning_rate, self.global_step, self.args.decay_step, self.args.decay_rate, staircase=True))
-        # self.optimizer = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss)
-        # self.optimizer = tf.train.MomentumOptimizer(self.lr,0.9).minimize(self.loss, global_step=self.global_step)
-        self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss, global_step=self.global_step)
+        self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss,global_step=self.global_step)
 
     def avg_pool(self, bottom, name):
-        return tf.nn.avg_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
+        return tf.nn.avg_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID', name=name)
 
     def max_pool(self, bottom, name):
-        return tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
+        return tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID', name=name)
 
     def conv_layer(self, bottom, name):
         with tf.variable_scope(name):
@@ -155,27 +153,15 @@ class Vgg19:
             weights = self.get_fc_weight(name)
             biases = self.get_bias(name)
 
-            # weights = tf.Variable(tf.zeros([dim,self.data_dict[name] ]), name="weights")
-            # weights = tf.Variable(tf.truncated_normal([dim,self.data_dict[name] ], stddev = 0.1), name="weights")
-            # biases = tf.Variable(tf.zeros([self.data_dict[name]]), name="biases")
-
-            # Fully connected layer. Note that the '+' operation automatically
-            # broadcasts the biases.
             fc = tf.nn.bias_add(tf.matmul(x, weights), biases)
 
             return fc
 
     def get_conv_filter(self, name):
-        # w1 = tf.Variable(tf.contrib.layers.xavier_initializer()([self.args.FL_kernelsize, self.args.FL_kernelsize, 1, self.args.FL_feature_map]))
-        # return tf.Variable(tf.contrib.layers.xavier_initializer()(self.data_dict[name]['filter']))
-        # return tf.Variable(tf.truncated_normal(self.data_dict[name]['filter'], stddev = 0.01), name="filter")
         return tf.Variable(tf.contrib.layers.xavier_initializer()(self.data_dict[name]['filter']))
 
     def get_bias(self, name):
-        # b1 = tf.Variable(tf.zeros([self.args.FL_feature_map]))
         return tf.Variable(tf.zeros(self.data_dict[name]['biases']), name="biases")
 
     def get_fc_weight(self, name):
-        #return tf.Variable(tf.zeros(self.data_dict[name]['filter']), name="weights")
-        # return tf.Variable(tf.truncated_normal(self.data_dict[name]['filter'], stddev = 0.01 ), name="weights")
         return tf.Variable(tf.contrib.layers.xavier_initializer()(self.data_dict[name]['filter']))

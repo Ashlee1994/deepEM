@@ -8,3 +8,4 @@ googlenet
 7layer
 bak
 *.pyc
+.gitignore
