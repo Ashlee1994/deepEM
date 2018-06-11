@@ -2,10 +2,10 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import os,sys,shutil,time
-from model import deepEM
+from vgg19_19S import Vgg19
 from utils import load_train
-#from args_19S import Train_Args
-from args_KLH import Train_Args
+# from args_vgg19 import Train_Args
+from args_vgg19_19S import Train_Args
 
 def train():
     args = Train_Args()
@@ -22,15 +22,17 @@ def train():
     output.write("read data start.\n")
 
     train_x, train_y, test_x, test_y = load_train(args)
+    print("shape of train_x: " , train_x.shape)
     time_end = time.time()
     print("\nread done! totally cost: %.5f \n" %(time_end - time_start),flush=True)
     output.write("read done! totally cost: " + str(time_end - time_start) +'\n')
     output.flush()
     print("training start.",flush=True)
     # copy argument file
-    srcfile = args.args_filename
+    srcfile = args.model_filename
     dstfile = args.model_save_path + srcfile
     shutil.copyfile(srcfile,dstfile)
+    shutil.copyfile(args.args_filename,args.model_save_path + args.args_filename)
 
     time_start = time.time()
 
@@ -38,9 +40,11 @@ def train():
     plot = []
     plot_train = []
     best_test_accuracy = 0
+    best_train_accuracy = 0
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
     with tf.Session() as sess:
-        deepem = deepEM(args)
+        deepem = Vgg19(args)
         saver = tf.train.Saver(tf.global_variables(), max_to_keep = 100)
         sess.run(tf.global_variables_initializer())
         print("train size is %d " % len(train_x), flush=True)
@@ -56,38 +60,48 @@ def train():
             for i in range(num_batch):
                 batch_x = train_x[args.batch_size*i:args.batch_size*(i+1)]
                 batch_y = train_y[args.batch_size*i:args.batch_size*(i+1)]
-                loss,pred_train,_= sess.run([deepem.loss, deepem.pred, deepem.optimizer], {deepem.X:batch_x, deepem.Y: batch_y})
+                # batch_x = batch_x.reshape((args.batch_size, args.resize, args.resize, 1))
+                loss,pred_train,lr,_= sess.run([deepem.loss, deepem.pred,deepem.lr, deepem.optimizer], {deepem.X:batch_x, deepem.Y: batch_y})
                 test_train_pred[args.batch_size*i:args.batch_size*(i+1)] = pred_train[:]
                 test_train_y[args.batch_size*i:args.batch_size*(i+1)] = batch_y[:]
                 cost.append(loss)
                 if i % 10 == 0:
-                    print('Loss: %.6f' % (np.mean(cost)),flush=True)
+                    print('lr: %.8f loss: %.6f' % (lr, np.mean(cost)),flush=True)
 
             tot_cost.append([np.mean(cost)])
             output.write("average loss: " + str(np.mean(cost)) + '\n')
             output.flush()
+            # print("test_train_pred",test_train_pred)
             test_train_pred = np.asarray(test_train_pred)
+            print("avg = %.6f , min = %.6f, max = %.6f "% (test_train_pred.mean(),test_train_pred.min(),test_train_pred.max()))
             threhold = 0.5
             test_train_pred[test_train_pred<=threhold] = 0
             test_train_pred[test_train_pred>threhold] = 1
             accuracy_train = np.sum(np.equal(test_train_pred,test_train_y))/len(test_train_y)
+
+            if accuracy_train > best_train_accuracy:
+                best_train_accuracy = accuracy_train
+
             plot_train.append(1- accuracy_train)
-            print("training set accuracy: %.6f" % accuracy_train,flush=True)
+            print("train accuracy: %.6f" % accuracy_train,flush=True)
+            print("best_train_accuracy: %.6f" % best_train_accuracy,flush=True)
             output.write("train accuracy: " + str(accuracy_train) + '\n')
             output.flush()
 
             # start testing
-            if e % 1 == 0:
+            if e % 5 == 0 or e = args.num_epochs -1:
                 print("\ntesting start.",flush=True)
                 num_batch = len(test_x) // args.batch_size
                 print("num_batch is %d" % num_batch,flush=True)
                 test_pred = []
                 for i in range(num_batch):
                     batch_x = test_x[args.batch_size*i:args.batch_size*(i+1)]
+                    # batch_x = batch_x.reshape((args.batch_size, args.resize, args.resize, 1))
                     batch_y = test_y[args.batch_size*i:args.batch_size*(i+1)]
                     pred = sess.run(deepem.pred,feed_dict={deepem.X: batch_x})
                     test_pred[args.batch_size*i:args.batch_size*(i+1)] = pred[:]
                 test_pred = np.asarray(test_pred)
+                print("avg = %.6f , min = %.6f, max = %.6f "% (test_pred.mean(),test_pred.min(),test_pred.max()))
                 threhold = 0.5
                 test_pred[test_pred<=threhold] = 0
                 test_pred[test_pred>threhold] = 1
@@ -101,6 +115,7 @@ def train():
                     best_test_accuracy = accuracy
                     ckpt_path = os.path.join(checkpoint_dir, 'model.ckpt')
                     saver.save(sess, ckpt_path, global_step = e)
+                    print("model saved!")
                 print("best_test_accuracy: %.6f" % best_test_accuracy,flush=True)
         time_end = time.time()
         print("\ntraining done! totally cost: %.5f \n" %(time_end - time_start),flush=True)
@@ -109,6 +124,10 @@ def train():
 
     train_end = time.time()
     print("\ntrain done! totally cost: %.5f \n" %(train_end - train_start),flush=True)
+    print("best_train_accuracy: %.6f " % best_train_accuracy)
+    print("best_test_accuracy: %.6f " % best_test_accuracy)
+    output.write("best_train_accuracy: " + str(best_train_accuracy) + '\n')
+    output.write("best_test_accuracy: " + str(best_test_accuracy) + '\n')
     output.flush()
     output.close
 

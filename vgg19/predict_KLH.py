@@ -2,15 +2,15 @@ import tensorflow as tf
 import numpy as np
 import mrcfile
 import os,sys,time
-from model import deepEM
+from vgg19_KLH import Vgg19
 from utils import mapstd,sub_img,non_max_suppression,load_predict
-from args_19S import Predict_Args
-#from args_KLH import Predict_Args
+# from args_19S import Predict_Args
+from args_vgg19_KLH import Predict_Args
 
 def predict():
     time_start = time.time()
     args = Predict_Args()
-    deepem = deepEM(args)
+    deepem = Vgg19(args)
     checkpoint_dir = args.model_save_path
     with tf.Session() as sess:
         saver = tf.train.Saver(tf.global_variables())
@@ -43,7 +43,7 @@ def predict():
                 batch_x = test_x[args.batch_size*i:args.batch_size*(i+1)]
                 batch_test_index = test_index[args.batch_size*i:args.batch_size*(i+1)]
                 pred = sess.run(deepem.pred,feed_dict={deepem.X: batch_x})
-                #print("pred: avg = %.10f, max = %.10f " % ( pred.mean(), pred.max())) 
+                print("pred: avg = %.10f, max = %.10f " % ( pred.mean(), pred.max())) 
                 for i in range(len(batch_test_index)):
                     sys.stdout.flush()
                     if pred[i] > args.accuracy:
@@ -53,6 +53,7 @@ def predict():
             print("%d particles detected in %s!" % (len(particle),mrc_name))
             if len(particle) == 0:
                 output.close
+                continue
             particle = np.asarray(particle)
             scores = np.asarray(scores)
             # remove overlapping particles

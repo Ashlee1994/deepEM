@@ -12,25 +12,25 @@ class deepEM():
             
     def variables_deepem(self):
         # first convolutional layer
-        std = 2
-        # w1 = tf.Variable(tf.contrib.layers.xavier_initializer()([self.args.FL_kernelsize, self.args.FL_kernelsize, 1, self.args.FL_feature_map]))
-        w1 = tf.Variable(tf.truncated_normal([self.args.FL_kernelsize, self.args.FL_kernelsize, 1, self.args.FL_feature_map], stddev = std))
+        std = 0.01
+        w1 = tf.Variable(tf.contrib.layers.xavier_initializer()([self.args.FL_kernelsize, self.args.FL_kernelsize, 1, self.args.FL_feature_map]))
+        # w1 = tf.Variable(tf.truncated_normal([self.args.FL_kernelsize, self.args.FL_kernelsize, 1, self.args.FL_feature_map], stddev = std))
         b1 = tf.Variable(tf.zeros([self.args.FL_feature_map]))
 
         # second pooling layer
         w2 = [1, self.args.SL_poolingsize, self.args.SL_poolingsize, 1]
 
         # third convolutional layer
-        # w3 = tf.Variable(tf.contrib.layers.xavier_initializer()([self.args.TL_kernelsize, self.args.TL_kernelsize, self.args.FL_feature_map, self.args.TL_feature_map]))
-        w3 = tf.Variable(tf.truncated_normal([self.args.TL_kernelsize, self.args.TL_kernelsize, self.args.FL_feature_map, self.args.TL_feature_map], stddev = std))
+        w3 = tf.Variable(tf.contrib.layers.xavier_initializer()([self.args.TL_kernelsize, self.args.TL_kernelsize, self.args.FL_feature_map, self.args.TL_feature_map]))
+        # w3 = tf.Variable(tf.truncated_normal([self.args.TL_kernelsize, self.args.TL_kernelsize, self.args.FL_feature_map, self.args.TL_feature_map], stddev = std))
         b3 = tf.Variable(tf.zeros([self.args.TL_feature_map]))
 
         # forth pooling layer
         w4 = [1, self.args.FOL_poolingsize, self.args.FOL_poolingsize, 1]
 
         # fifth convolutional layer
-        # w5 = tf.Variable(tf.contrib.layers.xavier_initializer()([self.args.FIL_kernelsize, self.args.FIL_kernelsize, self.args.TL_feature_map, self.args.FIL_feature_map]))
-        w5 = tf.Variable(tf.truncated_normal([self.args.FIL_kernelsize, self.args.FIL_kernelsize, self.args.TL_feature_map, self.args.FIL_feature_map], stddev = std))
+        w5 = tf.Variable(tf.contrib.layers.xavier_initializer()([self.args.FIL_kernelsize, self.args.FIL_kernelsize, self.args.TL_feature_map, self.args.FIL_feature_map]))
+        # w5 = tf.Variable(tf.truncated_normal([self.args.FIL_kernelsize, self.args.FIL_kernelsize, self.args.TL_feature_map, self.args.FIL_feature_map], stddev = std))
         b5 = tf.Variable(tf.zeros([self.args.FIL_feature_map]))
 
         # sixth pooling layer
@@ -71,7 +71,6 @@ class deepEM():
         print("layer 1 shape is: ",layer1_conv.shape)
         
         # layer 2
-        print("w2 = " , self.variables['w2'])
         layer2_pool = tf.nn.avg_pool(layer1_actv, self.variables['w2'],self.variables['w2'], padding = 'VALID')
         print("layer 2 shape is: ",layer2_pool.shape)
 
@@ -112,11 +111,9 @@ class deepEM():
         if not self.args.is_training:
             return
 
-        # self.error = self.Y - self.pred
-        # self.loss = (tf.sum())/2
-
         # regularization
         if not self.args.regularization:
+            # self.loss = tf.sqrt(tf.reduce_mean(tf.square(self.Y - self.logits)))
             self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.logits, labels = self.Y))
         else:
             self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.logits, labels = self.Y) + \
@@ -127,11 +124,11 @@ class deepEM():
 
         #self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels = self.Y))
         #self.loss = tf.sqrt(tf.reduce_mean(tf.square(self.Y - self.logits)))
-        self.lr = tf.maximum(1e-5,tf.train.exponential_decay(self.args.learning_rate, self.global_step, self.args.decay_step, self.args.decay_rate, staircase=True))
-        self.optimizer = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss)
-        #self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
+        self.lr = tf.maximum(1e-6,tf.train.exponential_decay(self.args.learning_rate, self.global_step, self.args.decay_step, self.args.decay_rate, staircase=True))
+        # self.optimizer = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss, global_step=self.global_step)
+        self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss, global_step=self.global_step)
 
-
+  
 
 
 

@@ -77,6 +77,7 @@ def read_particles(mic_path, dim_x, dim_y, boxsize, name_prefix, box_path, start
             image = Image.fromarray(particle)
             for i in range(rotation_n):
                 image_rot = image.rotate(rotation_angel*i)
+                # image_resize = image.resize(224,224)
                 particles.append(np.array(image_rot))
         mrc.close()
     return particles
@@ -276,7 +277,7 @@ def load_predict(args, mrc_name):
             x = i*args.scan_step
             y = j*args.scan_step       
             img = sub_img(mrc_std,x, y, args.boxsize)
-            stddev = np.std(img)
+            # stddev = np.std(img)
             test_x.append(img)
             test_index.append([x,args.dim_y - args.boxsize - y])
     mrc.close()
